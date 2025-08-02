@@ -4,6 +4,7 @@ from . import views
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from django.contrib.auth import views as auth_views
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -19,16 +20,25 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls), #admin페이지
+    path('admin/', admin.site.urls),
     path('', views.index, name='index'),
-    path("authors/", include("authors.urls")),  # 저자 페이지
-    path("books/", include("books.urls")),      # 도서 페이지
-    path("reviews/", include("reviews.urls")),  # 리뷰 페이지
-    
-    path("api/books/", include("books.api_urls")),      #도서 api
-    path("api/reviews/", include("reviews.api_urls")),  #리뷰 api
-    path("api/authors/", include("authors.api_urls")),  #저자 api
 
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    # 앱 URL들
+    path("authors/", include("authors.urls")),
+    path("books/", include("books.urls")),
+    path("reviews/", include("reviews.urls")),
+
+    # API URL들
+    path("api/books/", include("books.api_urls")),      # ✅ ViewSet + Router 구조 유지
+    path("api/reviews/", include("reviews.api_urls")),
+    path("api/authors/", include("authors.api_urls")),
+
+    # Swagger
+    path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path("redoc/", schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    # 로그인/로그아웃/회원가입
+    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
+    path('signup/', views.signup, name='signup'),
 ]

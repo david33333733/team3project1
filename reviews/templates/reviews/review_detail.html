@@ -1,118 +1,121 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}리뷰 상세{% endblock %}
 
 {% block content %}
-    <h1>리뷰 상세</h1>
-    <div id="review-details">
-        <p><strong>책 제목:</strong> <span id="review-book-title"></span></p>
-        <p><strong>작성자:</strong> <span id="review-username"></span></p>
-        <p><strong>평점:</strong> <span id="review-rating"></span>/5</p>
-        <p><strong>내용:</strong> <span id="review-content"></span></p>
-        <p><strong>작성일:</strong> <span id="review-created-at"></span></p>
-    </div>
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow mt-6">
+    <h1 class="text-2xl font-bold mb-4">리뷰 상세</h1>
+    <p><strong>책 제목:</strong> <span id="review-book-title"></span></p>
+    <p><strong>작성자:</strong> <span id="review-username"></span></p>
+    <p><strong>평점:</strong> <span id="review-rating"></span>/5</p>
+    <p><strong>내용:</strong> <span id="review-content"></span></p>
+    <p><strong>작성일:</strong> <span id="review-created-at"></span></p>
 
-    <div id="review-actions">
-        <!-- 수정/삭제 버튼이 여기에 동적으로 추가됩니다. -->
-    </div>
+    <div id="review-actions" class="mt-6 flex gap-4"></div>
 
-    <button onclick="window.history.back()">이전으로 돌아가기</button>
+    <button onclick="window.history.back()" class="mt-6 px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">이전으로</button>
+  </div>
 
-    <script>
-        const currentUserId = {{ request.user.id|default:"null" }};
-        const isStaff = {{ request.user.is_staff|lower }};
+  <!-- 사용자 정보 안전하게 주입 -->
+  <div id="user-data"
+       data-user-id="{{ request.user.id|default:'null' }}"
+       data-is-staff="{% if request.user.is_staff %}true{% else %}false{% endif %}">
+  </div>
 
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
+  <script>
+    const userDataEl = document.getElementById('user-data');
+    const currentUserId = parseInt(userDataEl.dataset.userId);
+    const isStaff = userDataEl.dataset.isStaff === "true";
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
         }
-        const csrftoken = getCookie('csrftoken');
+      }
+      return cookieValue;
+    }
 
-        async function fetchReviewDetail(id) {
-            const response = await fetch(`/api/reviews/${id}/`);
-            const review = await response.json();
+    const csrftoken = getCookie('csrftoken');
 
-            document.getElementById('review-book-title').innerText = review.book_title;
-            document.getElementById('review-username').innerText = review.username;
-            document.getElementById('review-rating').innerText = review.rating;
-            document.getElementById('review-content').innerText = review.content;
-            document.getElementById('review-created-at').innerText = new Date(review.created_at).toLocaleString();
+    async function fetchReviewDetail(id) {
+      const response = await fetch(`/api/reviews/${id}/`);
+      const review = await response.json();
 
-            const actionsDiv = document.getElementById('review-actions');
-            actionsDiv.innerHTML = '';
-            if (currentUserId && currentUserId === review.user_id) {
-                actionsDiv.innerHTML = `
-                    <button onclick="editReview(${review.review_id}, '${review.content}', ${review.rating})">수정</button>
-                `;
-            }
-            if (currentUserId && (currentUserId === review.user_id || isStaff)) {
-                actionsDiv.innerHTML += `
-                    <button onclick="deleteReview(${review.review_id})">삭제</button>
-                `;
-            }
-        }
+      document.getElementById('review-book-title').innerText = review.book_title;
+      document.getElementById('review-username').innerText = review.username;
+      document.getElementById('review-rating').innerText = review.rating;
+      document.getElementById('review-content').innerText = review.content;
+      document.getElementById('review-created-at').innerText = new Date(review.created_at).toLocaleString();
 
-        async function editReview(reviewId, currentContent, currentRating) {
-            const newContent = prompt("리뷰 내용을 수정하세요:", currentContent);
-            const newRating = prompt("평점을 수정하세요:", currentRating);
+      const actionsDiv = document.getElementById('review-actions');
+      actionsDiv.innerHTML = '';
 
-            if (newContent !== null && newRating !== null) {
-                const reviewData = {
-                    content: newContent,
-                    rating: parseInt(newRating)
-                };
+      if (currentUserId && currentUserId === review.user_id) {
+        actionsDiv.innerHTML += `<button onclick="editReview(${review.review_id}, '${review.content}', ${review.rating})" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">수정</button>`;
+      }
 
-                const response = await fetch(`/api/reviews/${reviewId}/`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify(reviewData)
-                });
+      if (currentUserId && (currentUserId === review.user_id || isStaff)) {
+        actionsDiv.innerHTML += `<button onclick="deleteReview(${review.review_id})" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">삭제</button>`;
+      }
+    }
 
-                if (response.ok) {
-                    alert('리뷰가 성공적으로 수정되었습니다!');
-                    fetchReviewDetail(reviewId); // 수정 후 상세 정보 새로고침
-                } else {
-                    alert('리뷰 수정에 실패했습니다.');
-                }
-            }
-        }
+    async function editReview(reviewId, currentContent, currentRating) {
+      const newContent = prompt("리뷰 내용을 수정하세요:", currentContent);
+      const newRating = prompt("평점을 수정하세요 (1~5):", currentRating);
 
-        async function deleteReview(reviewId) {
-            if (confirm('이 리뷰를 정말 삭제하시겠습니까?')) {
-                const response = await fetch(`/api/reviews/${reviewId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    }
-                });
+      if (newContent !== null && newRating !== null) {
+        const reviewData = {
+          content: newContent,
+          rating: parseInt(newRating)
+        };
 
-                if (response.ok) {
-                    alert('리뷰가 성공적으로 삭제되었습니다!');
-                    window.history.back(); // 삭제 후 이전 페이지로 돌아가기
-                } else {
-                    alert('리뷰 삭제에 실패했습니다.');
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            const reviewId = window.location.pathname.split('/')[2]; // URL에서 review_id 추출
-            fetchReviewDetail(reviewId);
+        const response = await fetch(`/api/reviews/${reviewId}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          },
+          body: JSON.stringify(reviewData)
         });
-    </script>
+
+        if (response.ok) {
+          alert('리뷰가 성공적으로 수정되었습니다!');
+          fetchReviewDetail(reviewId);
+        } else {
+          alert('리뷰 수정에 실패했습니다.');
+        }
+      }
+    }
+
+    async function deleteReview(reviewId) {
+      if (confirm('이 리뷰를 정말 삭제하시겠습니까?')) {
+        const response = await fetch(`/api/reviews/${reviewId}/`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          }
+        });
+
+        if (response.ok) {
+          alert('리뷰가 삭제되었습니다!');
+          window.history.back();
+        } else {
+          alert('리뷰 삭제 실패!');
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const reviewId = window.location.pathname.split('/')[2];
+      fetchReviewDetail(reviewId);
+    });
+  </script>
 {% endblock %}

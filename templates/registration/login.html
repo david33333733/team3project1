@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}로그인{% endblock %}
+
+{% block content %}
+  <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow mt-10">
+    <h1 class="text-2xl font-bold mb-4">로그인</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="mt-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">로그인</button>
+    </form>
+  </div>
+{% endblock %}

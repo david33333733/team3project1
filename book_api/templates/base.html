@@ -1,149 +1,38 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}도서 API 앱{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
-<style>
-  .handwriting-title {
-    font-family: 'Shadows Into Light', 'Nanum Pen Script', cursive;
-    font-size: 2.8rem;
-    color: #212121;
-    text-align: center;
-    font-weight: bold;
-    letter-spacing: 2px;
-    margin-bottom: 2.2rem;
-    margin-top: 2rem;
-    transition: transform 0.18s, color 0.2s;
-    display: block;
-    background: linear-gradient(90deg, #fffbe0 90%, #ffe0b280 100%);
-    border-radius: 24px;
-    box-shadow: 0 4px 40px 0 #ffe9b4a0, 0 1px 4px #f8bbc4;
-    padding: 1.1rem 0.7rem 1.1rem 0.7rem;
-    position: relative;
-  }
-  .handwriting-title:hover {
-    color: #f59e42;
-    transform: scale(1.08) rotate(-1deg);
-    box-shadow: 0 8px 44px #ffe69b, 0 1px 10px #f8bbc4;
-  }
-  .handwriting-title::after {
-    content: '';
-    display: block;
-    margin: 0.25em auto 0 auto;
-    width: 90%;
-    height: 4px;
-    background: repeating-linear-gradient(90deg, #ffe08a 0 16px, transparent 16px 24px);
-    border-radius: 3px;
-    opacity: 0.6;
-    position: absolute;
-    left: 5%;
-    bottom: 7px;
-    z-index: 0;
-  }
-</style>
-  <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Dongle:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    .handwriting {
-      font-family: 'Shadows Into Light', 'Dongle', 'Pretendard', cursive;
-      font-size: 2.7rem;
-      text-align: center;
-      color: #2d2d2d;
-      letter-spacing: 1px;
-      font-weight: 700;
-      margin-bottom: 1.7rem;
-      text-shadow: 1px 2px 0 #ffe0b2, 0 2px 16px #ffeedb9e;
-      transition: 0.2s;
-      background: linear-gradient(100deg, #fffbe0 70%, #ffe0b24a 100%);
-      border-radius: 22px;
-      padding: 0.8rem 1.5rem 0.6rem 1.5rem;
-      box-shadow: 0 3px 32px 0 #ffedd5cc, 0 1px 2px #dabfa8;
-      display: inline-block;
-      position: relative;
-    }
-    @keyframes handwriting-shake {
-      0% { transform: rotate(-0.7deg) scale(1.02); }
-      15% { transform: rotate(0.7deg) scale(1.03); }
-      30% { transform: rotate(-0.5deg) scale(0.98);}
-      45% { transform: rotate(0.5deg) scale(1.01);}
-      60% { transform: rotate(-0.8deg) scale(1.02);}
-      100% { transform: rotate(0.2deg) scale(1);}
-    }
-    .handwriting::after {
-      content: '';
-      display: block;
-      margin: 0.2em auto 0 auto;
-      width: 90%;
-      height: 4px;
-      background: repeating-linear-gradient(90deg, #ffe0b2 0 16px, transparent 16px 24px);
-      border-radius: 2px;
-      opacity: 0.5;
-      position: absolute;
-      left: 5%;
-      bottom: -5px;
-    }
-  </style>
-</head>
-<body class="min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100 font-[Pretendard]">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}북리뷰 사이트{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-gradient-to-b from-sky-100 to-white text-gray-800">
+    <!-- 상단 내비게이션 -->
+    <nav class="bg-white shadow mb-4">
+      <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <a href="/" class="text-xl font-bold text-blue-600">북리뷰</a>
+        <div class="flex items-center space-x-4">
+          {% if user.is_authenticated %}
+            <span class="text-sm text-gray-700">안녕하세요, {{ user.username }}님</span>
 
-
-  <nav class="bg-white/80 shadow-lg sticky top-0 z-20 border-b border-yellow-200 backdrop-blur">
-    <div class="container mx-auto flex items-center justify-between py-4 px-8">
-      <a href="/" class="flex items-center gap-3 select-none">
-        <span class="ml-2 text-2xl font-bold text-black tracking-tight">도서관리</span>
-      </a>
-      <div class="flex gap-4">
-
-        <a href="/authors/" class="block px-6 py-2 rounded-xl font-semibold bg-white text-gray-800 shadow hover:bg-yellow-200 hover:text-black transition-all border-2 border-yellow-200 relative flex items-center gap-2 group">
-          <span class="absolute -left-5 top-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform">
-
-            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="10" r="4" fill="#FDE68A"/>
-              <circle cx="3" cy="10" r="2.2" fill="#FF90B3"/>
-              <circle cx="17" cy="10" r="2.2" fill="#FF90B3"/>
-              <circle cx="10" cy="3" r="2.2" fill="#FF90B3"/>
-              <circle cx="10" cy="17" r="2.2" fill="#FF90B3"/>
-            </svg>
-          </span>
-          저자 관리
-        </a>
-        <a href="/books/" class="block px-6 py-2 rounded-xl font-semibold bg-white text-gray-800 shadow hover:bg-pink-200 hover:text-black transition-all border-2 border-pink-200 relative flex items-center gap-2 group">
-          <span class="absolute -left-5 top-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform">
-            <svg width="24" height="20" viewBox="0 0 24 20" fill="none">
-              <ellipse cx="7" cy="10" rx="6" ry="8" fill="#A5D8FF"/>
-              <ellipse cx="17" cy="10" rx="6" ry="8" fill="#FDB4BF"/>
-              <rect x="11" y="8" width="2" height="7" rx="1" fill="#B48E5B"/>
-              <circle cx="12" cy="7" r="2" fill="#FFD966"/>
-            </svg>
-          </span>
-          도서 관리
-        </a>
+            <!-- 🔻 로그아웃을 POST 방식으로 처리 -->
+            <form action="{% url 'logout' %}" method="post" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="text-blue-600 hover:underline text-sm">
+                로그아웃
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="text-blue-600 hover:underline text-sm">로그인</a>
+            <a href="{% url 'signup' %}" class="text-blue-600 hover:underline text-sm">회원가입</a>
+          {% endif %}
+        </div>
       </div>
-    </div>
-  </nav>
+    </nav>
 
-  <main>
-    <section class="max-w-2xl mx-auto mt-16 mb-16 bg-white/90 rounded-3xl shadow-xl border border-gray-200 px-8 py-10 relative
-                   before:content-[''] before:absolute before:top-0 before:left-4 before:w-1 before:h-full before:bg-yellow-200 before:rounded-full
-                   after:content-[''] after:absolute after:bottom-0 after:right-4 after:w-1 after:h-full after:bg-pink-200 after:rounded-full
-                   ">
-      <div class="absolute left-8 top-8 w-2 h-2 bg-yellow-400 rounded-full shadow"></div>
-      <div class="absolute right-8 bottom-8 w-2 h-2 bg-pink-400 rounded-full shadow"></div>
-
-      {% block page_title %}
-      {% endblock %}
-
+    <!-- 본문 내용 -->
+    <div class="container mx-auto px-4">
       {% block content %}
       {% endblock %}
-    </section>
-  </main>
-
-  <footer class="w-full text-center text-gray-400 text-xs mt-16 mb-4 select-none font-semibold">
-    &copy; 2025 도서 API 앱 · 
-    <span class="text-yellow-500">디자인: Tailwind CSS</span>
-  </footer>
-</body>
+    </div>
+  </body>
 </html>

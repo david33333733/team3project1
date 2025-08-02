@@ -12,14 +12,14 @@ from django.db.models.functions import Sqrt
 from django.core.paginator import Paginator
 
 def book_list(request): # 도서 관리 페이지 입니다.
-    book_list = Book.objects.all()
+    book_list = Book.objects.order_by('title')
     paginator = Paginator(book_list, 10)
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
     return render(request, 'books/book_list.html', {'books': books})
 
-def book_detail(request, pk): # 도서 상세 페이지 입니다.
-    book = get_object_or_404(Book, pk=pk)
+def book_detail(request, book_id):
+    book = get_object_or_404(Book, pk=book_id)
     return render(request, 'books/book_detail.html', {'book': book})
 
 def special_books(request): # 특별한 도서 페이지입니다.
@@ -57,3 +57,22 @@ class BookViewSet(viewsets.ModelViewSet): #클래스 기반 도서 뷰 입니다
         reviews = Review.objects.filter(book=book)
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data)
+    
+
+from django.shortcuts import render, redirect, get_object_or_404
+from reviews.forms import ReviewForm  # ✅ 폼 import 추가
+from books.models import Book  # (이미 위에서 import 되었을 가능성 있음)
+
+def review_create(request, book_id):
+    book = get_object_or_404(Book, pk=book_id)
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.book = book
+            review.user = request.user
+            review.save()
+            return redirect('book_detail', book_id=book.book_id)  # 저장 후 상세 페이지로 이동
+    else:
+        form = ReviewForm()
+    return render(request, 'reviews/review_form.html', {'form': form})

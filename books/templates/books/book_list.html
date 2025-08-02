@@ -4,180 +4,206 @@
 {% block title %}도서 목록{% endblock %}
 
 {% block content %}
-    <h1>도서 목록</h1>
+<h1 class="text-3xl font-bold mb-6 text-center">📚 도서 목록</h1>
 
-    {% if user.is_staff %}
-    <button id="show-add-book-form-btn">도서 추가</button>
-    <div id="add-book-form-container" style="display:none;">
-        <h2>새 도서 추가</h2>
-        <form id="add-book-form">
-            <label for="title">제목:</label>
-            <input type="text" id="title" name="title" required><br><br>
-            <label for="author">저자:</label>
-            <select id="author" name="author" required></select><br><br>
-            <label for="publication_date">출판일:</label>
-            <input type="date" id="publication_date" name="publication_date"><br><br>
-            <label for="description">설명:</label>
-            <textarea id="description" name="description"></textarea><br><br>
-            <button type="submit">도서 추가</button>
-            <button type="button" id="cancel-add-book-btn">취소</button>
-        </form>
-    </div>
-    {% endif %}
+<!-- ✅ 도서 검색바 (로그인 여부 상관없이 항상 노출) -->
+<div class="mb-6 flex justify-center">
+  <input 
+    type="text" 
+    id="search-input" 
+    placeholder="도서 제목 검색..." 
+    class="w-full md:w-1/2 px-4 py-2 border rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-300" />
+</div>
 
-    <div id="book-list">
-        <!-- 책 목록이 여기에 동적으로 채워집니다. -->
-    </div>
+{% if user.is_staff %}
+  <div class="text-right mb-4">
+    <button id="show-add-book-form-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">도서 추가</button>
+  </div>
+  <div id="add-book-form-container" class="bg-white p-6 rounded-lg shadow mb-6" style="display:none;">
+    <h2 class="text-xl font-semibold mb-4">새 도서 추가</h2>
+    <form id="add-book-form" class="space-y-4">
+      <div>
+        <label for="title" class="block font-medium">제목</label>
+        <input type="text" id="title" name="title" required class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label for="author" class="block font-medium">저자</label>
+        <select id="author" name="author" required class="w-full border rounded px-3 py-2"></select>
+      </div>
+      <div>
+        <label for="publication_date" class="block font-medium">출판일</label>
+        <input type="date" id="publication_date" name="publication_date" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label for="description" class="block font-medium">설명</label>
+        <textarea id="description" name="description" class="w-full border rounded px-3 py-2"></textarea>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">도서 추가</button>
+        <button type="button" id="cancel-add-book-btn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">취소</button>
+      </div>
+    </form>
+  </div>
+{% endif %}
 
-    <div class="pagination">
-        <span class="step-links">
-            <button id="prev-page" disabled>이전</button>
-            <span class="current-page">Page <span id="page-num">1</span> of <span id="total-pages">1</span></span>
-            <button id="next-page">다음</button>
-        </span>
-    </div>
+<div id="book-list" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <!-- 책 목록이 여기에 동적으로 채워집니다. -->
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let currentPage = 1;
-            const booksPerPage = 10;
-            const currentUserId = {{ request.user.id|default:"null" }};
+<div class="pagination mt-6 text-center">
+  <span class="step-links flex items-center justify-center gap-4">
+    <button id="prev-page" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" disabled>이전</button>
+    <span class="current-page text-sm">Page <span id="page-num">1</span> of <span id="total-pages">1</span></span>
+    <button id="next-page" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">다음</button>
+  </span>
+</div>
 
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
-            const csrftoken = getCookie('csrftoken');
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let currentPage = 1;
+  let currentSearch = "";
+  const booksPerPage = 10;
+  const currentUserId = {{ request.user.id|default:"null" }};
 
-            async function fetchBooks(page = 1) {
-                const response = await fetch(`/api/books/?page=${page}`);
-                const data = await response.json();
-                const books = data.results;
-                const bookListDiv = document.getElementById('book-list');
-                bookListDiv.innerHTML = '';
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
 
-                books.forEach(book => {
-                    const reviewsHtml = book.reviews.map(review => `<p><strong>${review.username}</strong>: ${review.content}</p>`).join('');
+  async function fetchBooks(page = 1, searchQuery = "") {
+    const url = new URL(`/api/books/`, window.location.origin);
+    url.searchParams.append("page", page);
+    if (searchQuery) {
+      url.searchParams.append("search", searchQuery);
+    }
 
-                    const bookItemDiv = document.createElement('div');
-                    bookItemDiv.className = 'book-item';
+    const response = await fetch(url);
+    const data = await response.json();
+    const books = data.results;
+    const bookListDiv = document.getElementById('book-list');
+    bookListDiv.innerHTML = '';
 
-                    const titleLink = document.createElement('a');
-                    titleLink.href = `/books/${book.book_id}/`; // 책 상세 페이지로 직접 연결
-                    titleLink.textContent = book.title;
+    books.forEach(book => {
+      const reviewsHtml = book.reviews.map(review =>
+        `<p class="text-sm"><strong>${review.username ?? "익명"}</strong>: ${review.content}</p>`
+      ).join('');
 
-                    const h3 = document.createElement('h3');
-                    h3.appendChild(titleLink);
+      const bookCard = `
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-xl font-bold mb-2 text-blue-700">
+            <a href="/books/${book.book_id}/" class="hover:underline">${book.title}</a>
+          </h3>
+          <p class="text-sm text-gray-700 mb-2"><strong>저자:</strong> ${book.author_name}</p>
+          <div class="border-t pt-2">
+            <h4 class="font-semibold mb-1">최신 리뷰</h4>
+            ${reviewsHtml || '<p class="text-gray-400 text-sm">아직 리뷰가 없습니다.</p>'}
+          </div>
+        </div>
+      `;
+      bookListDiv.innerHTML += bookCard;
+    });
 
-                    const authorP = document.createElement('p');
-                    authorP.innerHTML = `<strong>저자:</strong> ${book.author_name}`;
+    const totalPages = Math.ceil(data.count / booksPerPage);
+    document.getElementById('page-num').innerText = page;
+    document.getElementById('total-pages').innerText = totalPages;
 
-                    const reviewsDiv = document.createElement('div');
-                    reviewsDiv.innerHTML = `<h4>최신 리뷰</h4>${reviewsHtml || '<p>아직 리뷰가 없습니다.</p>'}`;
+    document.getElementById('prev-page').disabled = !data.previous;
+    document.getElementById('next-page').disabled = !data.next;
+  }
 
-                    bookItemDiv.appendChild(h3);
-                    bookItemDiv.appendChild(authorP);
-                    bookItemDiv.appendChild(reviewsDiv);
+  document.getElementById('prev-page').addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      fetchBooks(currentPage, currentSearch);
+    }
+  });
 
-                    bookListDiv.appendChild(bookItemDiv);
-                    bookListDiv.innerHTML += '<hr>';
-                });
+  document.getElementById('next-page').addEventListener('click', () => {
+    currentPage++;
+    fetchBooks(currentPage, currentSearch);
+  });
 
-                const totalPages = Math.ceil(data.count / booksPerPage);
-                document.getElementById('page-num').innerText = page;
-                document.getElementById('total-pages').innerText = totalPages;
+  document.getElementById('search-input').addEventListener('input', () => {
+    currentSearch = document.getElementById('search-input').value;
+    currentPage = 1;
+    fetchBooks(currentPage, currentSearch);
+  });
 
-                document.getElementById('prev-page').disabled = !data.previous;
-                document.getElementById('next-page').disabled = !data.next;
-            }
+  {% if user.is_staff %}
+  document.getElementById('show-add-book-form-btn').addEventListener('click', () => {
+    document.getElementById('add-book-form-container').style.display = 'block';
+    document.getElementById('show-add-book-form-btn').style.display = 'none';
+  });
 
-            document.getElementById('prev-page').addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    fetchBooks(currentPage);
-                }
-            });
+  document.getElementById('cancel-add-book-btn').addEventListener('click', () => {
+    document.getElementById('add-book-form-container').style.display = 'none';
+    document.getElementById('show-add-book-form-btn').style.display = 'block';
+    document.getElementById('add-book-form').reset();
+  });
 
-            document.getElementById('next-page').addEventListener('click', () => {
-                currentPage++;
-                fetchBooks(currentPage);
-            });
+  const addBookForm = document.getElementById('add-book-form');
+  if (addBookForm) {
+    addBookForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const publicationDate = formData.get('publication_date');
+      const bookData = {
+        title: formData.get('title'),
+        author: formData.get('author'),
+        description: formData.get('description'),
+      };
+      if (publicationDate) {
+        bookData.publication_date = publicationDate;
+      }
 
-            {% if user.is_staff %}
-            document.getElementById('show-add-book-form-btn').addEventListener('click', () => {
-                document.getElementById('add-book-form-container').style.display = 'block';
-                document.getElementById('show-add-book-form-btn').style.display = 'none';
-            });
+      const response = await fetch('/api/books/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(bookData)
+      });
+      if (response.ok) {
+        alert('도서가 성공적으로 추가되었습니다!');
+        fetchBooks(currentPage, currentSearch);
+        event.target.reset();
+        document.getElementById('add-book-form-container').style.display = 'none';
+        document.getElementById('show-add-book-form-btn').style.display = 'block';
+      } else {
+        alert('도서 추가에 실패했습니다.');
+      }
+    });
+  }
 
-            document.getElementById('cancel-add-book-btn').addEventListener('click', () => {
-                document.getElementById('add-book-form-container').style.display = 'none';
-                document.getElementById('show-add-book-form-btn').style.display = 'block';
-                document.getElementById('add-book-form').reset();
-            });
+  async function fetchAuthorsForForm() {
+    const response = await fetch('/api/authors/');
+    const data = await response.json();
+    const authors = data.results;
+    const authorSelect = document.getElementById('author');
+    authors.forEach(author => {
+      const option = document.createElement('option');
+      option.value = author.author_id;
+      option.textContent = author.author_name;
+      authorSelect.appendChild(option);
+    });
+  }
 
-            const addBookForm = document.getElementById('add-book-form');
-            if (addBookForm) {
-                addBookForm.addEventListener('submit', async (event) => {
-                    event.preventDefault();
-                    const formData = new FormData(event.target);
-                    const publicationDate = formData.get('publication_date');
-                    const bookData = {
-                        title: formData.get('title'),
-                        author: formData.get('author'),
-                        description: formData.get('description'),
-                    };
+  fetchAuthorsForForm();
+  {% endif %}
 
-                    if (publicationDate) {
-                        bookData.publication_date = publicationDate;
-                    }
-
-                    const response = await fetch('/api/books/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
-                        },
-                        body: JSON.stringify(bookData)
-                    });
-                    if (response.ok) {
-                        alert('도서가 성공적으로 추가되었습니다!');
-                        fetchBooks(currentPage);
-                        event.target.reset();
-                        document.getElementById('add-book-form-container').style.display = 'none';
-                        document.getElementById('show-add-book-form-btn').style.display = 'block';
-                    } else {
-                        alert('도서 추가에 실패했습니다.');
-                    }
-                });
-            }
-
-            async function fetchAuthorsForForm() {
-                const response = await fetch('/api/authors/');
-                const data = await response.json();
-                const authors = data.results;
-                const authorSelect = document.getElementById('author');
-                authors.forEach(author => {
-                    const option = document.createElement('option');
-                    option.value = author.author_id;
-                    option.textContent = author.author_name;
-                    authorSelect.appendChild(option);
-                });
-            }
-
-            fetchAuthorsForForm();
-            {% endif %}
-
-            fetchBooks(currentPage);
-        });
-    </script>
+  fetchBooks(currentPage);
+});
+</script>
 {% endblock %}

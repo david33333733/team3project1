@@ -19,7 +19,7 @@ class BookSerializer(serializers.ModelSerializer):
         fields = ('book_id', 'title', 'description', 'publication_date', 'created_at', 'author', 'author_name', 'average_rating', 'rating_std_dev', 'reviews')
 
     def get_reviews(self, obj):
-        reviews = obj.reviews.order_by('-created_at')[:2]
+        reviews = obj.reviews.order_by('-created_at')
         serializer = ReviewSerializer(reviews, many=True)
         return serializer.data
         

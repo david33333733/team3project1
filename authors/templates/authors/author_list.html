@@ -1,172 +1,24 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}저자 목록{% endblock %}
 
 {% block content %}
-    <h1>저자 목록</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for author in authors %}
+      <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+        <h3 class="text-xl font-semibold">{{ author.author_name }}</h3>
+        <p class="text-gray-500">{{ author.biography|default:"소개 없음" }}</p>
+      </div>
+    {% endfor %}
+  </div>
 
-    <div id="author-list">
-    </div>
-
-    <div class="pagination">
-        <span class="step-links">
-            <button id="prev-page" disabled>이전</button>
-            <span class="current-page">Page <span id="page-num">1</span> of <span id="total-pages">1</span></span>
-            <button id="next-page">다음</button>
-        </span>
-    </div>
-
-    {% if request.user.is_staff %}
-    <h2>새 저자 추가</h2>
-    <form id="add-author-form">
-        <label for="author_name">이름:</label>
-        <input type="text" id="author_name" name="author_name" required><br><br>
-        <button type="submit">저자 추가</button>
-    </form>
+  <div class="mt-8 flex justify-center">
+    {% if authors.has_previous %}
+      <a href="?page={{ authors.previous_page_number }}" class="px-4 py-2 bg-blue-200 rounded hover:bg-blue-300 mr-2">이전</a>
     {% endif %}
-
-    {% if request.user.is_staff %}
-    <h2>저자 수정</h2>
-    <form id="update-author-form">
-        <label for="update_id">저자 ID:</label>
-        <input type="number" id="update_id" name="author_id" required><br><br>
-        <label for="update_name">이름:</label>
-        <input type="text" id="update_name" name="author_name" required><br><br>
-        <button type="submit">저자 업데이트</button>
-    </form>
+    <span class="px-4 py-2 text-gray-700">{{ authors.number }} / {{ authors.paginator.num_pages }}</span>
+    {% if authors.has_next %}
+      <a href="?page={{ authors.next_page_number }}" class="px-4 py-2 bg-blue-200 rounded hover:bg-blue-300 ml-2">다음</a>
     {% endif %}
-
-    {% if request.user.is_staff %}
-    <h2>저자 삭제</h2>
-    <form id="delete-author-form">
-        <label for="delete_id">저자 ID:</label>
-        <input type="number" id="delete_id" name="author_id" required><br><br>
-        <button type="submit">저자 삭제</button>
-    </form>
-    {% endif %}
-
-    <script>
-        let currentPage = 1;
-        const authorsPerPage = 10;
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        const csrftoken = getCookie('csrftoken');
-
-        async function fetchAuthors(page = 1) {
-            const response = await fetch(`/api/authors/?page=${page}`);
-            const data = await response.json();
-            const authors = data.results;
-            const authorListDiv = document.getElementById('author-list');
-            authorListDiv.innerHTML = '<h2>모든 저자</h2>';
-            authors.forEach(author => {
-                authorListDiv.innerHTML += `
-                    <p>[${author.author_id}] ${author.author_name}</p>
-                `;
-            });
-
-            const totalPages = Math.ceil(data.count / authorsPerPage);
-            document.getElementById('page-num').innerText = page;
-            document.getElementById('total-pages').innerText = totalPages;
-
-            document.getElementById('prev-page').disabled = !data.previous;
-            document.getElementById('next-page').disabled = !data.next;
-        }
-
-        document.getElementById('prev-page').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                fetchAuthors(currentPage);
-            }
-        });
-
-        document.getElementById('next-page').addEventListener('click', () => {
-            currentPage++;
-            fetchAuthors(currentPage);
-        });
-
-        document.getElementById('add-author-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const authorData = Object.fromEntries(formData.entries());
-            console.log(authorData);
-
-            const response = await fetch('/api/authors/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify(authorData)
-            });
-            if (response.ok) {
-                alert('저자가 성공적으로 추가되었습니다!');
-                fetchAuthors(currentPage);
-                event.target.reset();
-            } else {
-                alert('저자 추가에 실패했습니다.');
-            }
-        });
-
-        document.getElementById('update-author-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const authorId = formData.get('author_id');
-            const authorData = Object.fromEntries(formData.entries());
-            authorData.author_id = parseInt(authorData.author_id);
-            console.log(authorData);
-            delete authorData.id;
-
-            const response = await fetch(`/api/authors/${authorId}/`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify(authorData)
-            });
-            if (response.ok) {
-                alert('저자가 성공적으로 업데이트되었습니다!');
-                fetchAuthors(currentPage);
-                event.target.reset();
-            } else {
-                alert('저자 업데이트에 실패했습니다.');
-            }
-        });
-
-        document.getElementById('delete-author-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const authorId = formData.get('author_id');
-
-            const response = await fetch(`/api/authors/${authorId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrftoken
-                }
-            });
-            if (response.ok) {
-                alert('저자가 성공적으로 삭제되었습니다!');
-                fetchAuthors(currentPage);
-                event.target.reset();
-            } else {
-                alert('저자 삭제에 실패했습니다.');
-            }
-        });
-
-        fetchAuthors(currentPage);
-    </script>
+  </div>
 {% endblock %}

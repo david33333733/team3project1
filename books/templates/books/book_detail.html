@@ -1,175 +1,34 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}책 상세{% endblock %}
+{% block title %}도서 상세정보{% endblock %}
 
 {% block content %}
-    <h1>책 상세 정보</h1>
-    <div id="book-details">
-        <h2 id="book-title"></h2>
-        <p><strong>저자:</strong> <span id="book-author"></span></p>
-        <p id="book-description"></p>
-        <p><strong>출판일:</strong> <span id="book-publication-date"></span></p>
-        <p><strong>생성일:</strong> <span id="book-created-at"></span></p>
-        {% if request.user.is_staff %}
-            <button onclick="editBook(bookId, window.currentBookTitle, window.currentBookDescription)">도서 수정</button>
-            <button onclick="deleteBook(bookId)">도서 삭제</button>
-        {% endif %}
+  <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-2xl font-bold mb-4">{{ book.title }}</h1>
+    <p class="mb-2"><span class="font-semibold">설명:</span> {{ book.description }}</p>
+    <p class="mb-2"><span class="font-semibold">출판일:</span> {{ book.publication_date }}</p>
+    <p class="mb-2"><span class="font-semibold">작성일:</span> {{ book.created_at }}</p>
+    <p class="mb-4"><span class="font-semibold">저자:</span> {{ book.author_id.author_name }}</p>
+
+    <hr class="my-6">
+
+    <div class="mb-6 text-right">
+      <a href="{% url 'review_create' book_id=book.book_id %}" class="inline-block px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+        ➕ 리뷰 작성
+      </a>
     </div>
 
-    <h2>리뷰</h2>
-    <div id="review-list">
-    </div>
-
-    <h3>리뷰 작성</h3>
-    <form id="add-review-form">
-        <input type="hidden" id="review-book-id" name="book">
-        <label for="rating">평점 (1-5):</label>
-        <input type="number" id="rating" name="rating" min="1" max="5" required><br><br>
-        <label for="content">내용:</label>
-        <textarea id="content" name="content" required></textarea><br><br>
-        <button type="submit">리뷰 제출</button>
-    </form>
-
-    <button onclick="window.history.back()">목록으로 돌아가기</button>
-
-    <script>
-        const currentUserId = {{ request.user.id|default:"null" }};
-        const isStaff = {{ request.user.is_staff|lower }};
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        const csrftoken = getCookie('csrftoken');
-
-        
-
-        async function editBook(bookId, currentTitle, currentDescription) {
-            const newTitle = prompt("새로운 도서 제목을 입력하세요:", currentTitle);
-            const newDescription = prompt("새로운 도서 설명을 입력하세요:", currentDescription);
-
-            if (newTitle !== null && newDescription !== null) {
-                const bookData = {
-                    title: newTitle,
-                    description: newDescription
-                };
-
-                const response = await fetch(`/api/books/${bookId}/`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify(bookData)
-                });
-
-                if (response.ok) {
-                    alert('도서 정보가 성공적으로 수정되었습니다!');
-                    await fetchBookDetails(bookId);
-                } else {
-                    alert('도서 정보 수정에 실패했습니다.');
-                }
-            }
-        }
-
-        async function deleteBook(bookId) {
-            if (confirm('이 도서를 정말 삭제하시겠습니까?')) {
-                const response = await fetch(`/api/books/${bookId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
-                });
-
-                if (response.ok) {
-                    alert('도서가 성공적으로 삭제되었습니다!');
-                    window.location.href = '/books/'; // Redirect to book list page
-                } else {
-                    alert('도서 삭제에 실패했습니다.');
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            const bookId = window.location.pathname.split('/')[2]; // URL에서 book_id 추출
-
-            async function fetchBookDetails(id) {
-                const response = await fetch(`/api/books/${id}/`);
-                const book = await response.json();
-
-                document.getElementById('book-title').innerText = book.title;
-                document.getElementById('book-author').innerText = book.author_name;
-                document.getElementById('book-description').innerText = book.description;
-                document.getElementById('book-publication-date').innerText = book.publication_date || 'N/A';
-                document.getElementById('book-created-at').innerText = new Date(book.created_at).toLocaleString();
-                document.getElementById('review-book-id').value = id;
-                window.bookId = id;
-                window.currentBookTitle = book.title;
-                window.currentBookDescription = book.description;
-            }
-
-            async function fetchReviewsForBook(bookId) {
-                const response = await fetch(`/api/reviews/?book_id=${bookId}`);
-                const data = await response.json();
-                const reviews = Array.isArray(data) ? data : data.results;
-                const reviewListDiv = document.getElementById('review-list');
-                reviewListDiv.innerHTML = '';
-                if (reviews && reviews.length > 0) {
-                    reviews.forEach(review => {
-                        reviewListDiv.innerHTML += `
-                            <div>
-                                <p><strong>${review.username}</strong> (평점: ${review.rating}/5): <a href="/reviews/${review.review_id}/">${review.content}</a></p>
-                                
-                            </div>
-                        `;
-                    });
-                } else {
-                    reviewListDiv.innerHTML = '<p>아직 리뷰가 없습니다.</p>';
-                }
-            }
-
-            const addReviewForm = document.getElementById('add-review-form');
-            if (addReviewForm) {
-                addReviewForm.addEventListener('submit', async (event) => {
-                    event.preventDefault();
-                    const bookId = document.getElementById('review-book-id').value;
-                    const formData = new FormData(event.target);
-                    const reviewData = Object.fromEntries(formData.entries());
-                    reviewData.book = parseInt(bookId);
-                    reviewData.rating = parseInt(reviewData.rating);
-
-                    const response = await fetch('/api/reviews/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
-                        },
-                        body: JSON.stringify(reviewData)
-                    });
-
-                    if (response.ok) {
-                        alert('리뷰가 성공적으로 추가되었습니다!');
-                        await fetchReviewsForBook(bookId);
-                        event.target.reset();
-                    } else {
-                        alert('리뷰 추가에 실패했습니다.');
-                    }
-                });
-            }
-
-            fetchBookDetails(bookId);
-            fetchReviewsForBook(bookId);
-        });
-    </script>
+    <h2 class="text-xl font-semibold mb-2">리뷰</h2>
+    {% for review in book.reviews.all %}
+      <div class="bg-gray-100 p-4 rounded mb-4">
+        <p class="text-sm text-gray-600">
+          작성자: {{ review.user.username }} | 평점: {{ review.rating }}
+        </p>
+        <p class="mt-2">{{ review.content }}</p>
+        <p class="text-xs text-right text-gray-400">{{ review.created_at }}</p>
+      </div>
+    {% empty %}
+      <p class="text-gray-500">리뷰가 없습니다.</p>
+    {% endfor %}
+  </div>
 {% endblock %}
