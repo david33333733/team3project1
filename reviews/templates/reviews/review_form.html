@@ -1,26 +1,36 @@
 {% extends 'base.html' %}
-
-{% block title %}리뷰 작성{% endblock %}
+{% block title %}리뷰 {% if review %}수정{% else %}작성{% endif %}{% endblock %}
 
 {% block content %}
   <div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
-    <h1 class="text-xl font-bold mb-4">리뷰 등록</h1>
+    <h1 class="text-xl font-bold mb-4">리뷰 {% if review %}수정{% else %}등록{% endif %}</h1>
     <form method="post">
       {% csrf_token %}
 
       <div class="mb-4">
         <label for="id_rating" class="block text-sm font-semibold mb-1">평점 (1~5):</label>
-        <input type="number" name="rating" id="id_rating" min="1" max="5" class="w-full border rounded px-3 py-2" required>
+        <input type="number" name="rating" id="id_rating" min="1" max="5"
+               value="{% if review %}{{ review.rating }}{% endif %}"
+               class="w-full border rounded px-3 py-2" required>
       </div>
 
       <div class="mb-4">
         <label for="id_content" class="block text-sm font-semibold mb-1">리뷰 내용:</label>
-        <textarea name="content" id="id_content" rows="4" class="w-full border rounded px-3 py-2" required></textarea>
+        <textarea name="content" id="id_content" rows="4"
+                  class="w-full border rounded px-3 py-2" required>{% if review %}{{ review.content }}{% endif %}</textarea>
       </div>
 
-      <button type="submit" class="mt-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">제출</button>
+      <div class="flex justify-end gap-2 mt-4">
+        <button type="submit"
+                class="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+          {% if review %}수정 완료{% else %}제출{% endif %}
+        </button>
+        {% if review %}
+          <a href="{% url 'book_detail' book_id=review.book.book_id %}"
+             class="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">취소</a>
+        {% endif %}
+      </div>
     </form>
   </div>
 {% endblock %}
-
 

@@ -15,7 +15,9 @@ class Review(models.Model):
     )
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,  # ✅ 작성자가 삭제돼도 리뷰 유지
+        null=True,                  # ✅ user 필드 null 허용
+        blank=True,                 # ✅ admin 폼 등에서 비워도 됨
         related_name="reviews",
         verbose_name="작성자"
     )
@@ -37,5 +39,6 @@ class Review(models.Model):
         verbose_name_plural = "리뷰 목록"
         ordering = ["-created_at"]
 
-    def str(self):
-        return f"[{self.book.title}] {self.user.username}님의 리뷰"
+    def __str__(self):  # ✅ 오타 수정: str → __str__
+        username = self.user.username if self.user else "알 수 없음"
+        return f"[{self.book.title}] {username}님의 리뷰"

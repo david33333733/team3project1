@@ -19,6 +19,7 @@
     </div>
 
     <h2 class="text-xl font-semibold mb-2">리뷰</h2>
+
     {% for review in book.reviews.all %}
       <div class="bg-gray-100 p-4 rounded mb-4">
         <p class="text-sm text-gray-600">
@@ -26,6 +27,13 @@
         </p>
         <p class="mt-2">{{ review.content }}</p>
         <p class="text-xs text-right text-gray-400">{{ review.created_at }}</p>
+
+        {% if review.user and user == review.user or user.is_staff %}
+          <div class="mt-2 flex gap-2 justify-end">
+            <a href="{% url 'review_update' review.pk %}" class="px-3 py-1 text-sm bg-yellow-400 text-white rounded hover:bg-yellow-500">✏ 수정</a>
+            <a href="{% url 'review_delete' review.pk %}" class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600">🗑 삭제</a>
+          </div>
+        {% endif %}
       </div>
     {% empty %}
       <p class="text-gray-500">리뷰가 없습니다.</p>

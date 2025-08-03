@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}리뷰 삭제{% endblock %}
+
+{% block content %}
+  <div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow text-center">
+    <h1 class="text-xl font-bold mb-4">리뷰 삭제</h1>
+    <p class="mb-6">정말 이 리뷰를 삭제하시겠습니까?</p>
+    <p class="italic mb-6 text-gray-700">"{{ review.content }}"</p>
+
+    <form method="post" class="flex justify-center gap-4">
+      {% csrf_token %}
+      <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">삭제</button>
+      <a href="{% url 'book_detail' book_id=review.book.book_id %}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">취소</a>
+    </form>
+  </div>
+{% endblock %}
